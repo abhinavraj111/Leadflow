@@ -1,0 +1,25 @@
+name,email,company,title,source,message
+Priya Nair,priya.nair@northwindlogistics.example,Northwind Logistics,VP Engineering,Referral,We need a quote for managed CI/CD this quarter. Budget is approved and we want a demo this week.
+Marcus Cole,marcus.cole@brightlane.example,Brightlane,DevOps Manager,Webinar,Interested in your observability stack. Can you send pricing for 40 engineers?
+Elena Rossi,elena@studiorossi.example,Studio Rossi,Designer,Website,Just curious what you do. Writing a blog post.
+Tom Becker,tbecker@mailbox.example,,Student,Newsletter,Researching DevOps tools for a class project.
+Aisha Khan,aisha.khan@kitepay.example,KitePay,CTO,Outbound reply,We are moving to Kubernetes and need help urgently. Can we talk tomorrow?
+Liam O'Brien,liam@harborworks.example,Harborworks,Engineering Lead,Website,Looking at options for Grafana dashboards. Not sure about timing yet.
+Sofia Martins,sofia.martins@vertexfreight.example,Vertex Freight,Head of Platform,Partner,Our Jenkins pipelines take 45 minutes and fail often. We have budget for a pilot next month.
+Daniel Weiss,dweiss@pinegrove.example,Pinegrove Health,Director of IT,Webinar,Saw your talk on Prometheus alerting. Do you offer a trial?
+Mei Lin,mei.lin@lanternapps.example,Lantern Apps,Founder,Referral,We are a 12-person startup on AWS EKS. Looking for someone to own our deployment pipeline. What does it cost?
+Carlos Ortega,carlos@ortegaconsulting.example,Ortega Consulting,Freelance Consultant,Website,Do you have a reseller program?
+Hannah Fischer,h.fischer@alpenbank.example,Alpen Bank,Senior DevOps Engineer,Website,We evaluate tools every year. Please send a brochure.
+Ravi Patel,ravi.patel@cloudspire.example,Cloudspire,COO,Outbound reply,"Yes, we want to cut cloud costs and speed up releases. Send times for a call, ideally this week."
+Olivia Brown,olivia.brown@greenfieldfoods.example,Greenfield Foods,IT Manager,Newsletter,"Not now, maybe next year."
+Yusuf Demir,yusuf@anatolianretail.example,Anatolian Retail,Chief Technology Officer,Referral,Our Docker builds are slow and our Grafana dashboards are a mess. Need a proposal and a quote by Friday.
+Grace Kim,grace.kim@sunpeakenergy.example,Sunpeak Energy,Platform Lead,Webinar,Would like to see a demo of Terraform and ArgoCD automation. Team of 25.
+Noah Williams,noah.w@mailbox.example,,,Website,hi
+Fatima Zahra,fatima.zahra@medinasoft.example,Medina Software,Engineering Manager,Partner,"We are migrating from Jenkins to GitHub Actions. Open to a pilot, timing is flexible."
+Ethan Moore,ethan.moore@university.example,State Tech University,Research Assistant,Newsletter,Looking for free tools for a thesis on observability.
+Isabella Conti,isabella@contimodena.example,Conti Modena,CEO,Website,"We keep having outages and I need this fixed. Please call me, this is urgent."
+Arjun Mehta,arjun.mehta@dataharbor.example,DataHarbor,Director of Engineering,Outbound reply,Interested. Can you share a case study and pricing tiers first?
+Chloe Dubois,chloe.dubois@lumiere.example,Lumière Studio,Marketing Manager,Website,Is your product compatible with our website builder?
+Kenji Sato,kenji.sato@tokyoflow.example,Tokyo Flow,Head of SRE,Webinar,Prometheus and Grafana alert fatigue is our biggest issue. Looking to buy something before the end of the quarter.
+Zoe Anderson,zoe.anderson@mailbox.example,"Anderson & Sons, Ltd.",Owner,Website,"We are a small shop with 3 developers. ""Cheap"" is key, but we do need CI/CD help."
+Mateo Silva,mateo.silva@andesgroup.example,Andes Group,VP Operations,Referral,"Our CTO asked me to find a managed DevOps partner. Budget exists, decision in 30 days."

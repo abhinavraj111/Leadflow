@@ -1,0 +1,258 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>LeadFlow – lead triage and follow-up automation</title>
+<style>
+:root{--bg:#f2f4f8;--panel:#fff;--ink:#14213d;--mute:#5a6578;--line:#d5dbe6;--acc:#2f54eb;--acc-d:#1d3fc4;--hot:#c0243c;--warm:#a86400;--cold:#1f6f8b;--ok:#1b7f4b}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--ink);font:15px/1.55 system-ui,-apple-system,"Segoe UI",sans-serif}
+h1,h2{font-family:ui-serif,Georgia,"Times New Roman",serif;margin:0;font-weight:700}
+header{padding:28px 32px 8px;display:flex;justify-content:space-between;align-items:flex-end;gap:16px;flex-wrap:wrap}
+h1{font-size:30px;letter-spacing:-.01em}
+header p{margin:4px 0 0;color:var(--mute);max-width:60ch}
+.mode{font-size:13px;padding:6px 12px;border-radius:999px;border:1px solid var(--line);background:var(--panel)}
+.mode.live{border-color:var(--ok);color:var(--ok)}
+main{display:grid;grid-template-columns:minmax(300px,380px) 1fr;gap:20px;padding:16px 32px 40px;align-items:start}
+@media(max-width:900px){main{grid-template-columns:1fr;padding:12px 16px 32px}header{padding:20px 16px 4px}}
+.panel{background:var(--panel);border:1px solid var(--line);border-radius:6px;padding:18px}
+.panel+.panel{margin-top:16px}
+h2{font-size:18px;margin-bottom:10px}
+label{display:block;font-size:13px;font-weight:600;margin:12px 0 4px}
+input,select,textarea{width:100%;font:inherit;color:inherit;background:#fff;border:1px solid var(--line);border-radius:4px;padding:8px 10px}
+textarea{resize:vertical;min-height:130px;font:13px/1.45 ui-monospace,Menlo,Consolas,monospace}
+input:focus,select:focus,textarea:focus,button:focus-visible,summary:focus-visible{outline:3px solid #9db4ff;outline-offset:1px}
+.row{display:flex;gap:8px;flex-wrap:wrap;margin-top:10px}
+button{font:inherit;font-weight:600;border-radius:4px;padding:9px 14px;border:1px solid var(--ink);background:#fff;color:var(--ink);cursor:pointer}
+button.go{background:var(--acc);border-color:var(--acc);color:#fff}
+button.go:hover{background:var(--acc-d)}
+button:disabled{opacity:.5;cursor:not-allowed}
+.hint{font-size:12.5px;color:var(--mute);margin:6px 0 0}
+.track{display:grid;grid-template-columns:repeat(5,1fr);gap:0;margin-bottom:4px}
+.step{padding:10px 8px 10px 12px;border-top:3px solid var(--line);font-size:13px;color:var(--mute)}
+.step b{display:block;font-size:14px;color:var(--ink)}
+.step.run{border-color:var(--acc)}.step.run b{color:var(--acc)}
+.step.done{border-color:var(--ok)}
+.stats{display:flex;gap:18px;flex-wrap:wrap;margin:14px 0 6px;font-size:14px}
+.stats span b{font-size:22px;font-family:ui-serif,Georgia,serif;margin-right:4px}
+.tw{overflow-x:auto}
+table{width:100%;border-collapse:collapse;font-size:14px}
+th{text-align:left;font-size:13px;color:var(--mute);font-weight:600;padding:8px 8px;border-bottom:2px solid var(--ink)}
+td{padding:10px 8px;border-bottom:1px solid var(--line);vertical-align:top}
+tr.lead{cursor:pointer}tr.lead:hover{background:#f7f9fd}
+.sub{color:var(--mute);font-size:13px}
+.tier{font-weight:700}.Hot{color:var(--hot)}.Warm{color:var(--warm)}.Cold{color:var(--cold)}
+.bar{height:6px;background:var(--line);border-radius:3px;margin-top:5px;width:90px}.bar i{display:block;height:100%;border-radius:3px;background:var(--ink)}
+tr.detail td{background:#f7f9fd}
+.detail input,.detail textarea{margin-bottom:8px}.detail textarea{min-height:150px;font:14px/1.5 system-ui,sans-serif}
+.err{color:var(--hot)}
+.log{font:12.5px/1.6 ui-monospace,Menlo,Consolas,monospace;color:var(--mute);max-height:150px;overflow:auto;white-space:pre-wrap}
+.empty{padding:28px 8px;color:var(--mute)}
+@media (prefers-reduced-motion:no-preference){.step{transition:border-color .3s}}
+</style>
+</head>
+<body>
+<header>
+  <div>
+    <h1>LeadFlow</h1>
+    <p>Paste inbound leads. LeadFlow scores each one, routes it to the right team, and writes a personal follow-up email you can send.</p>
+  </div>
+  <span id="mode" class="mode" role="status"></span>
+</header>
+
+<main>
+<section aria-label="Setup">
+  <div class="panel">
+    <h2>1. Add leads</h2>
+    <label for="csv">Lead list (CSV with a header row)</label>
+    <textarea id="csv" spellcheck="false" placeholder="name,email,company,title,source,message"></textarea>
+    <div class="row">
+      <button id="sample">Load sample leads</button>
+      <button id="file">Upload CSV</button>
+      <input id="fileIn" type="file" accept=".csv,text/csv" hidden>
+    </div>
+    <p class="hint">Useful columns: name, email, company, title, source, message. Any extra columns are passed along too.</p>
+  </div>
+
+  <div class="panel">
+    <h2>2. Describe your offer</h2>
+    <label for="sender">Your name</label><input id="sender" placeholder="Abhinav">
+    <label for="company">Your company</label><input id="company" placeholder="Acme Cloud">
+    <label for="offer">What you sell and who it fits</label>
+    <textarea id="offer" style="min-height:80px;font:14px/1.45 system-ui,sans-serif" placeholder="Managed CI/CD and observability for mid-size engineering teams."></textarea>
+  </div>
+
+  <div class="panel">
+    <h2>3. Connect Claude (optional)</h2>
+    <label for="key">Anthropic API key</label>
+    <input id="key" type="password" autocomplete="off" placeholder="sk-ant-…">
+    <label for="model">Model</label>
+    <select id="model"><option value="claude-sonnet-4-6">Claude Sonnet 4.6</option><option value="claude-haiku-4-5">Claude Haiku 4.5</option></select>
+    <p class="hint">Without a key, LeadFlow runs in demo mode with simple scoring rules, so you can try it right away. The key stays in this browser and is sent only to api.anthropic.com. Use a test key, not a shared one.</p>
+    <div class="row"><button id="run" class="go">Run automation</button></div>
+  </div>
+</section>
+
+<section aria-label="Results">
+  <div class="panel">
+    <div class="track" id="track">
+      <div class="step"><b>Read leads</b>Parse the list</div>
+      <div class="step"><b>Score</b>Rate buying intent</div>
+      <div class="step"><b>Route</b>Pick the owner</div>
+      <div class="step"><b>Draft</b>Write the email</div>
+      <div class="step"><b>Export</b>Download results</div>
+    </div>
+    <div class="stats" id="stats"></div>
+    <div class="row" style="margin:0 0 8px">
+      <button id="exp" disabled>Download CSV</button>
+      <button id="copyAll" disabled>Copy all emails</button>
+    </div>
+    <div class="tw">
+      <table>
+        <thead><tr><th>Lead</th><th>Score</th><th>Route</th><th>Next action</th></tr></thead>
+        <tbody id="rows"><tr><td colspan="4" class="empty">No results yet. Load the sample leads and select Run automation.</td></tr></tbody>
+      </table>
+    </div>
+  </div>
+  <div class="panel"><h2>Run log</h2><div class="log" id="log" aria-live="polite">Waiting to start.</div></div>
+</section>
+</main>
+
+<script>
+const $=s=>document.querySelector(s);
+const esc=s=>String(s==null?"":s).replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
+const sleep=ms=>new Promise(r=>setTimeout(r,ms));
+const store={get(k){try{return localStorage.getItem(k)||""}catch(e){return ""}},set(k,v){try{localStorage.setItem(k,v)}catch(e){}}};
+const SAMPLE=`name,email,company,title,source,message
+Priya Nair,priya@northwind.io,Northwind Logistics,VP Engineering,Referral,"We need a quote for managed CI/CD this quarter. Budget is approved and we want a demo this week."
+Marcus Cole,marcus@brightlane.co,Brightlane,DevOps Manager,Webinar,"Interested in your observability stack. Can you send pricing for 40 engineers?"
+Elena Rossi,elena@studiorossi.com,Studio Rossi,Designer,Website,"Just curious what you do. Writing a blog post."
+Tom Becker,tbecker@gmail.com,,Student,Newsletter,"Researching DevOps tools for a class project."
+Aisha Khan,aisha@kitepay.com,KitePay,CTO,Outbound reply,"We are moving to Kubernetes and need help urgently. Can we talk tomorrow?"
+Liam O'Brien,liam@harborworks.ie,Harborworks,Engineering Lead,Website,"Looking at options for Grafana dashboards. Not sure about timing yet."`;
+
+function parseCSV(t){
+  const rows=[];let r=[],c="",q=false;
+  for(let i=0;i<t.length;i++){const ch=t[i];
+    if(q){if(ch=='"'){if(t[i+1]=='"'){c+='"';i++}else q=false}else c+=ch}
+    else if(ch=='"')q=true;
+    else if(ch==','){r.push(c);c=""}
+    else if(ch=='\n'||ch=='\r'){if(ch=='\r'&&t[i+1]=='\n')i++;r.push(c);c="";if(r.some(x=>x.trim()))rows.push(r);r=[]}
+    else c+=ch}
+  r.push(c);if(r.some(x=>x.trim()))rows.push(r);
+  if(rows.length<2)return [];
+  const h=rows.shift().map(x=>x.trim().toLowerCase());
+  return rows.map(r=>Object.fromEntries(h.map((k,i)=>[k,(r[i]||"").trim()])));
+}
+
+function demo(l,cfg){
+  const t=(l.title||"").toLowerCase(),m=(l.message||"").toLowerCase(),src=(l.source||"").toLowerCase();
+  let s=30;
+  if(/ceo|cto|coo|founder|vp|head|director|chief/.test(t))s+=25;else if(/manager|lead/.test(t))s+=12;
+  [[/pricing|quote|budget|buy|purchase/,20],[/demo|trial|pilot|talk/,15],[/urgent|asap|this week|tomorrow|quarter/,10],[/curious|student|research|blog|class/,-22]].forEach(([re,p])=>{if(re.test(m))s+=p});
+  if(/referral|partner|outbound/.test(src))s+=12;else if(/webinar|demo/.test(src))s+=8;
+  if(!l.company)s-=8;
+  s=Math.max(5,Math.min(98,s));
+  const tier=s>=70?"Hot":s>=40?"Warm":"Cold";
+  const route=tier=="Hot"?"Sales – book call":tier=="Warm"?"SDR – follow-up":"Nurture – newsletter";
+  const next=tier=="Hot"?"Call within 24 hours":tier=="Warm"?"Send follow-up and ask about timing":"Add to monthly newsletter";
+  const first=(l.name||"there").split(" ")[0],co=l.company||"your team";
+  const body=tier=="Hot"
+   ?`Hi ${first},\n\nThanks for reaching out. Based on what you shared about ${co}, I think we can help quickly. ${cfg.offer||"We can walk you through how it works."}\n\nDo you have 20 minutes tomorrow or Thursday for a short call?\n\n${cfg.sender||"The team"}${cfg.company?`\n${cfg.company}`:""}`
+   :`Hi ${first},\n\nThanks for your interest. ${cfg.offer||"Here is a short overview of what we do."} When is a good time to talk about what ${co} needs?\n\n${cfg.sender||"The team"}${cfg.company?`\n${cfg.company}`:""}`;
+  return{score:s,tier,intent:"Estimated from title, message and source",route,next_action:next,subject:tier=="Hot"?`Quick call about ${co}?`:`Following up on your note`,body};
+}
+
+async function ai(l,cfg){
+  const sys='You are a revenue operations analyst. Score and route one inbound lead, then write a short personal follow-up email. Reply with ONLY a JSON object, no markdown: {"score":0-100,"tier":"Hot|Warm|Cold","intent":"max 12 words","route":"Sales – book call|SDR – follow-up|Nurture – newsletter|Disqualify","next_action":"max 14 words","subject":"","body":"max 90 words, plain text, signed with the sender name, no placeholders"}';
+  const user=`Sender: ${cfg.sender||"Sales team"} at ${cfg.company||"our company"}\nWhat we sell and who it fits: ${cfg.offer||"not provided"}\n\nLead:\n${JSON.stringify(l)}`;
+  for(let a=0;a<3;a++){
+    const r=await fetch("https://api.anthropic.com/v1/messages",{method:"POST",headers:{"content-type":"application/json","x-api-key":cfg.key,"anthropic-version":"2023-06-01","anthropic-dangerous-direct-browser-access":"true"},
+      body:JSON.stringify({model:cfg.model,max_tokens:800,system:sys,messages:[{role:"user",content:user}]})});
+    if(r.status==429||r.status>=500){await sleep(1500*(a+1));continue}
+    const d=await r.json();
+    if(!r.ok)throw new Error((d.error&&d.error.message)||("HTTP "+r.status));
+    const txt=d.content.map(c=>c.text||"").join("");
+    const j=JSON.parse(txt.match(/\{[\s\S]*\}/)[0]);
+    j.score=Math.max(0,Math.min(100,Math.round(+j.score||0)));
+    if(!["Hot","Warm","Cold"].includes(j.tier))j.tier=j.score>=70?"Hot":j.score>=45?"Warm":"Cold";
+    return j;
+  }
+  throw new Error("Rate limited. Try again in a minute.");
+}
+
+let results=[];
+const log=m=>{const e=$("#log");e.textContent+=(e.textContent=="Waiting to start."?"":"\n")+new Date().toLocaleTimeString()+"  "+m;e.scrollTop=e.scrollHeight};
+function steps(state){[...$("#track").children].forEach((el,i)=>{el.className="step "+(state[i]||"")})}
+function setMode(){const live=!!$("#key").value.trim();const m=$("#mode");m.textContent=live?"Claude connected":"Demo mode (no key)";m.className="mode"+(live?" live":"")}
+
+function render(){
+  const tb=$("#rows");
+  if(!results.length){return}
+  tb.innerHTML=results.map((x,i)=>{const l=x.lead,a=x.out;
+    if(x.error)return `<tr class="lead"><td><b>${esc(l.name||l.email||"Lead "+(i+1))}</b><div class="sub">${esc(l.company)}</div></td><td colspan="3" class="err">Failed: ${esc(x.error)}</td></tr>`;
+    if(!a)return `<tr><td><b>${esc(l.name||l.email||"Lead "+(i+1))}</b><div class="sub">${esc(l.company)}</div></td><td colspan="3" class="sub">Working…</td></tr>`;
+    return `<tr class="lead" data-i="${i}" tabindex="0" aria-expanded="false"><td><b>${esc(l.name||l.email)}</b><div class="sub">${esc([l.title,l.company].filter(Boolean).join(", "))}</div></td>
+    <td><span class="tier ${esc(a.tier)}">${esc(a.tier)} ${a.score}</span><div class="bar"><i style="width:${a.score}%"></i></div></td>
+    <td>${esc(a.route)}</td><td>${esc(a.next_action)}<div class="sub">${esc(a.intent)}</div></td></tr>`}).join("");
+  const c=t=>results.filter(x=>x.out&&x.out.tier==t).length;
+  $("#stats").innerHTML=`<span><b>${c("Hot")}</b>hot</span><span><b>${c("Warm")}</b>warm</span><span><b>${c("Cold")}</b>cold</span><span><b>${results.filter(x=>x.error).length}</b>failed</span>`;
+}
+
+$("#rows").addEventListener("click",ev=>{
+  const tr=ev.target.closest("tr.lead[data-i]");if(!tr)return;
+  const nx=tr.nextElementSibling;
+  if(nx&&nx.classList.contains("detail")){nx.remove();tr.setAttribute("aria-expanded","false");return}
+  const x=results[+tr.dataset.i];
+  const d=document.createElement("tr");d.className="detail";
+  d.innerHTML=`<td colspan="4"><label>To: ${esc(x.lead.email)}</label><input class="sj" value="${esc(x.out.subject)}" aria-label="Subject"><textarea class="bd" aria-label="Email body">${esc(x.out.body)}</textarea><button class="cp">Copy email</button></td>`;
+  d.querySelector(".sj").oninput=e=>x.out.subject=e.target.value;
+  d.querySelector(".bd").oninput=e=>x.out.body=e.target.value;
+  d.querySelector(".cp").onclick=async e=>{try{await navigator.clipboard.writeText("Subject: "+x.out.subject+"\n\n"+x.out.body);e.target.textContent="Copied"}catch(_){e.target.textContent="Select the text and copy"}};
+  tr.after(d);tr.setAttribute("aria-expanded","true");
+});
+$("#rows").addEventListener("keydown",ev=>{if(ev.key=="Enter"&&ev.target.matches("tr.lead"))ev.target.click()});
+
+async function run(){
+  const leads=parseCSV($("#csv").value);
+  if(!leads.length){log("No leads found. Add a header row and at least one lead.");return}
+  const cfg={key:$("#key").value.trim(),model:$("#model").value,sender:$("#sender").value.trim(),company:$("#company").value.trim(),offer:$("#offer").value.trim()};
+  ["sender","company","offer","model"].forEach(k=>store.set("lf_"+k,cfg[k]));store.set("lf_key",cfg.key);
+  $("#run").disabled=true;$("#exp").disabled=$("#copyAll").disabled=true;
+  results=leads.map(l=>({lead:l}));$("#log").textContent="Waiting to start.";
+  steps(["done"]);log(`Read ${leads.length} leads. Mode: ${cfg.key?"Claude ("+cfg.model+")":"demo"}.`);
+  steps(["done","run","run","run"]);render();
+  let next=0,done=0;
+  const worker=async()=>{while(next<leads.length){const i=next++;
+    try{results[i].out=cfg.key?await ai(leads[i],cfg):demo(leads[i],cfg);if(!cfg.key)await sleep(250);log(`${leads[i].name||leads[i].email}: ${results[i].out.tier} (${results[i].out.score}), ${results[i].out.route}`)}
+    catch(e){results[i].error=e.message;log(`${leads[i].name||leads[i].email}: failed. ${e.message}`)}
+    done++;render()}};
+  await Promise.all([worker(),worker(),worker()]);
+  steps(["done","done","done","done","run"]);
+  const ok=results.filter(x=>x.out).length;log(`Finished. ${ok} of ${leads.length} leads processed.`);
+  $("#run").disabled=false;$("#exp").disabled=$("#copyAll").disabled=!ok;
+}
+
+function csvCell(v){v=String(v==null?"":v);return /[",\n]/.test(v)?'"'+v.replace(/"/g,'""')+'"':v}
+$("#exp").onclick=()=>{
+  const h=["name","email","company","title","source","score","tier","route","next_action","subject","body"];
+  const lines=[h.join(",")].concat(results.filter(x=>x.out).map(x=>h.map(k=>csvCell(k in x.out?x.out[k]:x.lead[k])).join(",")));
+  const a=document.createElement("a");a.href=URL.createObjectURL(new Blob([lines.join("\n")],{type:"text/csv"}));a.download="leadflow-results.csv";a.click();
+  steps(["done","done","done","done","done"]);log("Downloaded leadflow-results.csv.");
+};
+$("#copyAll").onclick=async e=>{
+  const t=results.filter(x=>x.out).map(x=>`To: ${x.lead.email}\nSubject: ${x.out.subject}\n\n${x.out.body}`).join("\n\n----------\n\n");
+  try{await navigator.clipboard.writeText(t);e.target.textContent="Copied"}catch(_){e.target.textContent="Copy blocked by browser"}
+};
+$("#sample").onclick=()=>{$("#csv").value=SAMPLE;
+  if(!$("#sender").value)$("#sender").value="Abhinav";if(!$("#company").value)$("#company").value="Acme Cloud";
+  if(!$("#offer").value)$("#offer").value="Managed CI/CD and observability for engineering teams, built on Jenkins, Kubernetes, Prometheus and Grafana."};
+$("#file").onclick=()=>$("#fileIn").click();
+$("#fileIn").onchange=e=>{const f=e.target.files[0];if(!f)return;const r=new FileReader();r.onload=()=>{$("#csv").value=r.result};r.readAsText(f)};
+$("#run").onclick=run;$("#key").addEventListener("input",setMode);
+["sender","company","offer","model"].forEach(k=>{const v=store.get("lf_"+k);if(v)$("#"+k).value=v});
+$("#key").value=store.get("lf_key");setMode();
+</script>
+</body>
+</html>
